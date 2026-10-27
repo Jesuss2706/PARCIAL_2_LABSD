@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cliente Audio gRPC-Web</title>
+    <link rel="stylesheet" href="lib/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+    <header class="encabezado">
+        <div class="marca">
+            <span class="logo" aria-hidden="true">●</span>
+            <h1>Spotify <small>Transmisión de audio con gRPC-Web</small></h1>
+        </div>
+        <nav class="navegacion">
+            <a href="index.html" class="activo">Reproductor</a>
+            <a href="planes.html">Planes de suscripción</a>
+        </nav>
+        <div id="estado-reacciones" class="estado-servidor">Conectando con reacciones…</div>
+    </header>
+
+    <main class="contenedor">
+        <div class="columnas">
+            <!-- Streaming del audio -->
+            <section class="panel">
+                <h2>1. Pedir audio</h2>
+                <p class="texto-tenue">La petición viaja al API Gateway (localhost:8000), que la envía al Proxy Envoy y este al Servidor de Streaming.</p>
+                <div class="formulario">
+                    <label for="song-title">Título del audio
+                        <input id="song-title" type="text" list="audios-disponibles" placeholder="cancion1" value="cancion1">
+                        <datalist id="audios-disponibles">
+                            <option value="cancion1">
+                            <option value="cancion2">
+                        </datalist>
+                    </label>
+                    <label for="format-select">Formato
+                        <select id="format-select">
+                            <option value="mp3">mp3</option>
+                            <option value="wav">wav</option>
+                            <option value="m4a">m4a</option>
+                        </select>
+                    </label>
+                    <button class="boton primario" type="button"
+                        onclick="pedirCancion(document.getElementById('song-title').value, document.getElementById('format-select').value || 'mp3')">
+                        <i class="fa-solid fa-play"></i> Pedir audio
+                    </button>
+                </div>
+
+                <h3 id="status">Esperando petición...</h3>
+                <p class="texto-tenue">Audio: <strong id="audio-actual">—</strong></p>
+                <audio id="audio-player" controls style="display:none"></audio>
+            </section>
+
+            <!-- Reacciones por WebSocket -->
+            <section class="panel">
+                <h2>2. Reacciones en vivo</h2>
+                <label for="usuario">Tu nombre (lo verán los demás oyentes)
+                    <input id="usuario" type="text" maxlength="30">
+                </label>
+                <p id="canal-actual" class="canal">Pida un audio y reprodúzcalo para reaccionar</p>
+
+                <div id="reacciones">
+                    <button class="reaction" type="button" title="Me gusta" onclick="enviarReaccionServidor('like', this)" disabled><i class="fa-solid fa-thumbs-up icon-like"></i></button>
+                    <button class="reaction" type="button" title="Me encanta" onclick="enviarReaccionServidor('heart', this)" disabled><i class="fa-solid fa-heart icon-heart"></i></button>
+                    <button class="reaction" type="button" title="Me entristece" onclick="enviarReaccionServidor('sad', this)" disabled><i class="fa-solid fa-face-sad-tear icon-sad"></i></button>
+                    <button class="reaction" type="button" title="Me divierte" onclick="enviarReaccionServidor('fun', this)" disabled><i class="fa-solid fa-face-laugh icon-fun"></i></button>
+                </div>
+
+                <div id="mensajes" aria-hidden="true"></div>
+                <h3>Reacciones de los oyentes de este audio</h3>
+                <ul id="lista-reacciones" class="lista-reacciones">
+                    <li class="texto-tenue">Aún no hay reacciones.</li>
+                </ul>
+            </section>
+        </div>
+
+        <!-- Ecos del cliente -->
+        <section class="panel">
+            <h2>Bitácora</h2>
+            <div id="log"></div>
+        </section>
+    </main>
+
+    <script src="lib/sockjs.min.js"></script>
+    <script src="lib/stomp.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="./bundle.js"></script>
+    <script src="./funciones.js"></script>
+</body>
+</html>

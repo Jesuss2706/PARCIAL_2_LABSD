@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planes de suscripción</title>
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+  <header class="encabezado">
+    <div class="marca">
+      <span class="logo" aria-hidden="true">●</span>
+      <h1>Spotify <small>Planes de suscripción</small></h1>
+    </div>
+    <nav class="navegacion">
+      <a href="index.html">Reproductor</a>
+      <a href="planes.html" class="activo">Planes de suscripción</a>
+    </nav>
+    <div id="estado-servidor" class="estado-servidor">Consultando servidor…</div>
+  </header>
+
+  <main class="contenedor">
+    <!-- Listar suscripciones -->
+    <section class="panel">
+      <div class="panel-titulo">
+        <h2>1. Planes disponibles</h2>
+        <button id="btn-recargar-suscripciones" class="boton secundario" type="button">Recargar</button>
+      </div>
+      <div id="lista-suscripciones" class="tarjetas">
+        <p class="texto-tenue">Cargando suscripciones…</p>
+      </div>
+    </section>
+
+    <div class="columnas">
+      <!-- Realizar pago -->
+      <section class="panel">
+        <h2>2. Pagar plan</h2>
+        <form id="form-pago" class="formulario" autocomplete="off">
+          <label>Plan
+            <select id="suscripcion" required></select>
+          </label>
+          <label>Monto a pagar (COP)
+            <input id="monto" type="text" readonly>
+          </label>
+          <label>Cédula
+            <input id="cedula" type="text" inputmode="numeric" pattern="[0-9]{6,10}" value="1061000000" required>
+          </label>
+          <label>Nombre del titular
+            <input id="nombre" type="text" value="Estudiante Sistemas Distribuidos" required>
+          </label>
+          <label>Número de tarjeta
+            <input id="tarjeta" type="text" inputmode="numeric" pattern="[0-9 ]{13,23}" value="4111 1111 1111 1111" required>
+          </label>
+          <button id="btn-pagar" class="boton primario" type="submit">Pagar</button>
+        </form>
+
+        <div class="ultimo-token">
+          <h3>Último token de idempotencia</h3>
+          <code id="ultimo-token">—</code>
+          <button id="btn-reenviar" class="boton secundario" type="button" disabled>
+            Simular reutilizar este token
+          </button>
+        </div>
+      </section>
+
+      <!-- Bitácora y resultado -->
+      <section class="panel">
+        <div class="panel-titulo">
+          <h2>Bitácora de intentos</h2>
+          <span id="cronometro" class="cronometro">0.0 s</span>
+        </div>
+        <ol id="bitacora" class="bitacora">
+          <li class="texto-tenue">Aquí se registra cada intento y reintento de pago.</li>
+        </ol>
+        <div id="resultado" class="resultado oculto"></div>
+      </section>
+    </div>
+
+    <!-- Consultar transacciones -->
+    <section class="panel">
+      <h2>3. Consultar transacciones</h2>
+      <form id="form-consulta" class="formulario en-linea">
+        <label>Cédula
+          <input id="cedula-consulta" type="text" inputmode="numeric" pattern="[0-9]{6,10}" value="1061000000" required>
+        </label>
+        <button class="boton primario" type="submit">Consultar</button>
+      </form>
+      <div id="resultado-consulta"></div>
+    </section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/suscripciones-api.js"></script>
+  <script src="js/suscripciones-app.js"></script>
+</body>
+</html>
