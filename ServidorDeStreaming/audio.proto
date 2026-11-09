@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package servicios;
+option go_package = "/serviciosAudio";
+
+service AudioService {
+  // Streaming de audio: el servidor envía el mp3 en fragmentos
+  rpc AudioStream(AudioRequest) returns (stream AudioChunk);
+}
+
+// DTO de la petición: el nombre del archivo y los datos que se envían
+// al servidor de estadísticas cuando empieza la reproducción.
+message AudioRequest {
+  string filename = 1; // Nombre del archivo mp3 (nombreArchivo del servidor de metadatos)
+  int32 id_audio = 2;  // Id del audio en el servidor de metadatos
+  string titulo = 3;   // Título del audio
+  string tipo = 4;     // Nombre del tipo de audio (Música, Podcasts, ...)
+  string cliente = 5;  // Identificador del cliente (nombre del equipo)
+}
+
+// DTO de la respuesta: un fragmento del audio
+message AudioChunk {
+  bytes data = 1; // Fragmento de audio
+}

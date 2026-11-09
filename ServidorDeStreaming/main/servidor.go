@@ -1,38 +1,31 @@
+// Punto de entrada del Servidor de Streaming (gRPC).
 package main
 
 import (
 	"fmt"
-	"log"
 	"net"
 
 	"google.golang.org/grpc"
 	capacontroladores "servidor.local/grpc-servidor/capaControladores"
-	"servidor.local/grpc-servidor/capalogger"
-	pb "servidor.local/grpc-servidor/serviciosCancion"
+	pb "servidor.local/grpc-servidor/serviciosAudio"
 )
 
-func main() {
+const direccionServidor = ":50051"
 
-	listener, err := net.Listen("tcp", ":50051")
+func main() {
+	lis, err := net.Listen("tcp", direccionServidor)
 	if err != nil {
-		log.Fatalf("Error escuchando en el puerto: %v", err)
+		panic(err)
 	}
 
 	grpcServer := grpc.NewServer()
+	pb.RegisterAudioServiceServer(grpcServer, capacontroladores.NuevoControladorServidor())
 
-	// Crear logger como singleton
-	objLogger := capalogger.CrearUnicaInstanciaDelLogger()
-	defer objLogger.CerrarArchivo()
-
-	objControlador := capacontroladores.NewControladorServidor(objLogger)
-
-	// Se registra el controlador que ofrece el procedimiento remoto
-	pb.RegisterAudioServiceServer(grpcServer, objControlador)
-
-	fmt.Println("Servidor gRPC escuchando en :50051...")
-
-	// Iniciar el servidor
-	if err := grpcServer.Serve(listener); err != nil {
-		log.Fatalf("Error al iniciar servidor gRPC: %v", err)
+	fmt.Println("==================================================")
+	fmt.Println("   Servidor de Streaming (gRPC)")
+	fmt.Printf("   Escuchando en %s ...\n", direccionServidor)
+	fmt.Println("==================================================")
+	if err := grpcServer.Serve(lis); err != nil {
+		panic(err)
 	}
 }

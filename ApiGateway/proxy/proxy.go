@@ -1,111 +1,98 @@
-// Package proxy reenvía las peticiones al servicio correspondiente usando
-// httputil.ReverseProxy (soporta REST, WebSocket y el streaming de gRPC-Web).
+// Package proxy reenvía las peticiones del gateway a los microservicios y a Envoy.
 package proxy
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"sort"
 	"strings"
 
-	"servidor.local/api-gateway/configuracion"
-	"servidor.local/api-gateway/descubrimiento"
+	"github.com/gin-gonic/gin"
+
+	"api-gateway/config"
+	"api-gateway/discovery"
 )
 
-// CabeceraGateway es la cabecera que los microservicios exigen en su filtro.
-const CabeceraGateway = "X-Gateway-Token"
+// HeaderGateway es la cabecera que los microservicios exigen en su filtro.
+const HeaderGateway = "X-Gateway-Token"
 
-// Gateway enruta cada petición según su prefijo.
-type Gateway struct {
-	rutas      []configuracion.Ruta
-	resolvedor *descubrimiento.Resolvedor
-	secreto    string
-}
-
-// NuevoGateway crea el gateway. Las rutas se ordenan de la más larga a la más corta.
-func NuevoGateway(rutas []configuracion.Ruta, resolvedor *descubrimiento.Resolvedor, secreto string) *Gateway {
-	ordenadas := append([]configuracion.Ruta(nil), rutas...)
-	sort.Slice(ordenadas, func(i, j int) bool { return len(ordenadas[i].Prefijo) > len(ordenadas[j].Prefijo) })
-	return &Gateway{rutas: ordenadas, resolvedor: resolvedor, secreto: secreto}
-}
-
-// ServeHTTP busca la ruta, resuelve el destino y reenvía la petición.
-func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ruta, encontrada := g.buscarRuta(r.URL.Path)
-	if !encontrada {
-		responderError(w, http.StatusNotFound, "ruta no registrada en el API Gateway")
-		return
+// quitarCORS elimina las cabeceras CORS de la respuesta del servicio interno:
+// las pone el gateway (si se duplican, el navegador rechaza la respuesta).
+func quitarCORS(resp *http.Response) error {
+	for clave := range resp.Header {
+		if strings.HasPrefix(strings.ToLower(clave), "access-control-") {
+			resp.Header.Del(clave)
+		}
 	}
+	return nil
+}
 
-	destino, nombre, err := g.resolverDestino(ruta)
+func errorProxy(servicio string) func(http.ResponseWriter, *http.Request, error) {
+	return func(w http.ResponseWriter, r *http.Request, err error) {
+		log.Printf("[gateway] error hacia %s: %v", servicio, err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadGateway)
+		_, _ = w.Write([]byte(`{"error":"el servicio ` + servicio + ` no respondió"}`))
+	}
+}
+
+// Handler crea un manejador Gin que busca el microservicio en Consul y le reenvía
+// la petición (incluidas las conexiones WebSocket, que ReverseProxy soporta).
+func Handler(ruta config.Ruta, resolver *discovery.Resolver, secreto string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		destino, err := resolver.Resolver(ruta.Servicio)
+		if err != nil {
+			log.Printf("[gateway] %v", err)
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": err.Error()})
+			return
+		}
+
+		rp := &httputil.ReverseProxy{
+			Rewrite: func(pr *httputil.ProxyRequest) {
+				pr.SetURL(destino)
+				// /api/audios/7 -> /audios/7
+				pr.Out.URL.Path = ruta.Destino + strings.TrimPrefix(pr.In.URL.Path, ruta.Prefijo)
+				pr.Out.URL.RawPath = ""
+				pr.SetXForwarded()
+				// Marca la petición como proveniente del gateway (sobrescribe cualquier valor del cliente).
+				pr.Out.Header.Set(HeaderGateway, secreto)
+				// El CORS ya lo resolvió el gateway: sin Origin, el microservicio trata la petición
+				// como del mismo origen (evita que Spring rechace el WebSocket abierto desde file://).
+				pr.Out.Header.Del("Origin")
+			},
+			ModifyResponse: quitarCORS,
+			ErrorHandler:   errorProxy(ruta.Servicio),
+			FlushInterval:  -1,
+		}
+
+		tipo := "HTTP"
+		if strings.EqualFold(c.GetHeader("Upgrade"), "websocket") {
+			tipo = "WebSocket"
+		}
+		log.Printf("[gateway] %s %s %s -> %s (%s)", tipo, c.Request.Method, c.Request.URL.Path, destino, ruta.Servicio)
+		rp.ServeHTTP(c.Writer, c.Request)
+	}
+}
+
+// HandlerEnvoy reenvía las llamadas gRPC-Web al Proxy Envoy. FlushInterval -1 hace
+// que cada fragmento de audio se entregue al navegador apenas llega (streaming).
+func HandlerEnvoy(urlEnvoy string) gin.HandlerFunc {
+	destino, err := url.Parse(urlEnvoy)
 	if err != nil {
-		fmt.Printf("[ECO GATEWAY] %s %s -> ERROR: %v\n", r.Method, r.URL.Path, err)
-		responderError(w, http.StatusServiceUnavailable, err.Error())
-		return
+		log.Fatalf("URL de Envoy inválida %q: %v", urlEnvoy, err)
 	}
-
-	rutaInterna := ruta.Destino + strings.TrimPrefix(r.URL.Path, ruta.Prefijo)
-	if rutaInterna == "" {
-		rutaInterna = "/"
-	}
-	tipo := "HTTP"
-	if strings.EqualFold(r.Header.Get("Upgrade"), "websocket") {
-		tipo = "WebSocket"
-	}
-	fmt.Printf("[ECO GATEWAY] %s %s %s -> %s %s%s\n", tipo, r.Method, r.URL.Path, nombre, destino, rutaInterna)
-
-	proxyInverso := &httputil.ReverseProxy{
+	rp := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			pr.SetURL(destino)
-			pr.Out.URL.Path = rutaInterna
-			pr.Out.URL.RawPath = ""
 			pr.SetXForwarded()
-			// Marca la petición como proveniente del gateway (sobrescribe cualquier valor del cliente).
-			pr.Out.Header.Set(CabeceraGateway, g.secreto)
 		},
-		ModifyResponse: func(respuesta *http.Response) error {
-			eliminarCabecerasCORS(respuesta.Header)
-			return nil
-		},
-		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
-			fmt.Printf("[ECO GATEWAY] Error hacia %s: %v\n", nombre, err)
-			responderError(w, http.StatusBadGateway, "el servicio "+nombre+" no respondió")
-		},
+		ModifyResponse: quitarCORS,
+		ErrorHandler:   errorProxy("proxy-envoy"),
+		FlushInterval:  -1,
 	}
-	proxyInverso.ServeHTTP(w, r)
-}
-
-func (g *Gateway) buscarRuta(ruta string) (configuracion.Ruta, bool) {
-	for _, candidata := range g.rutas {
-		if ruta == candidata.Prefijo || strings.HasPrefix(ruta, candidata.Prefijo+"/") {
-			return candidata, true
-		}
+	return func(c *gin.Context) {
+		log.Printf("[gateway] gRPC-Web %s %s -> %s (proxy-envoy)", c.Request.Method, c.Request.URL.Path, destino)
+		rp.ServeHTTP(c.Writer, c.Request)
 	}
-	return configuracion.Ruta{}, false
-}
-
-func (g *Gateway) resolverDestino(ruta configuracion.Ruta) (*url.URL, string, error) {
-	if ruta.URLFija != "" {
-		destino, err := url.Parse(ruta.URLFija)
-		return destino, "proxy-envoy", err
-	}
-	destino, err := g.resolvedor.Resolver(ruta.Servicio)
-	return destino, ruta.Servicio, err
-}
-
-// eliminarCabecerasCORS quita las cabeceras CORS del servicio; las pone el gateway.
-func eliminarCabecerasCORS(cabeceras http.Header) {
-	for clave := range cabeceras {
-		if strings.HasPrefix(strings.ToLower(clave), "access-control-") {
-			cabeceras.Del(clave)
-		}
-	}
-}
-
-func responderError(w http.ResponseWriter, codigo int, mensaje string) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(codigo)
-	fmt.Fprintf(w, "{\"error\":%q}\n", mensaje)
 }

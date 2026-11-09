@@ -1,20 +1,20 @@
 {
-  "name": "cliente-html",
+  "name": "cliente-web-streaming",
   "version": "1.0.0",
-  "description": "",
-  "main": "cliente_receptor_fragmentos.js",
+  "private": true,
+  "description": "Cliente web: catálogo, streaming gRPC-Web, reacciones (WebSocket/STOMP), suscripciones e historial",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "webpack",
+    "start": "webpack && http-server . -p 3000 -c-1 -o"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "google-protobuf": "^4.0.1",
-    "grpc-web": "^2.0.2"
+    "@stomp/stompjs": "^7.0.0",
+    "google-protobuf": "^3.21.4",
+    "grpc-web": "^1.5.0"
   },
   "devDependencies": {
-    "webpack": "^5.103.0",
-    "webpack-cli": "^6.0.1"
+    "http-server": "^14.1.1",
+    "webpack": "^5.94.0",
+    "webpack-cli": "^5.1.4"
   }
 }

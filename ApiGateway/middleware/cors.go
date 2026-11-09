@@ -1,34 +1,29 @@
-// Package middleware contiene los filtros del API Gateway.
+// Package middleware contiene los filtros HTTP del API Gateway.
 package middleware
 
-import "net/http"
+import (
+	"net/http"
 
-// CORS permite que el cliente web (abierto como archivo o desde otro puerto)
-// consuma los servicios. El gateway es el único que agrega cabeceras CORS:
-// las que envíen los microservicios o Envoy se eliminan en el proxy para no duplicarlas.
-//
-// Se refleja el Origin y se permiten credenciales porque SockJS (reacciones)
-// hace sus peticiones con withCredentials.
-func CORS(siguiente http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		origen := r.Header.Get("Origin")
-		if origen != "" {
-			w.Header().Set("Access-Control-Allow-Origin", origen)
-			w.Header().Set("Access-Control-Allow-Credentials", "true")
-			w.Header().Set("Access-Control-Expose-Headers", "grpc-status, grpc-message, grpc-status-details-bin")
-			w.Header().Add("Vary", "Origin")
-		}
+	"github.com/gin-gonic/gin"
+)
 
-		// Petición de verificación previa (preflight): la responde el gateway.
-		if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			if cabeceras := r.Header.Get("Access-Control-Request-Headers"); cabeceras != "" {
-				w.Header().Set("Access-Control-Allow-Headers", cabeceras)
-			}
-			w.Header().Set("Access-Control-Max-Age", "1728000")
-			w.WriteHeader(http.StatusNoContent)
+// CORS permite que el cliente web y el administrador web (abiertos desde file:// o
+// desde otro puerto) consuman el gateway. El gateway es el ÚNICO que pone cabeceras CORS:
+// las que vengan de los microservicios o de Envoy se eliminan en el proxy para no duplicarlas.
+func CORS() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		h := c.Writer.Header()
+		h.Set("Access-Control-Allow-Origin", "*")
+		h.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		h.Set("Access-Control-Allow-Headers",
+			"Content-Type, Authorization, X-User-Agent, X-Grpc-Web, Grpc-Timeout, Keep-Alive, Cache-Control, "+
+				"Content-Transfer-Encoding, X-Accept-Content-Transfer-Encoding, X-Accept-Response-Streaming")
+		h.Set("Access-Control-Expose-Headers", "Grpc-Status, Grpc-Message")
+		h.Set("Access-Control-Max-Age", "1728000")
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
-		siguiente.ServeHTTP(w, r)
-	})
+		c.Next()
+	}
 }

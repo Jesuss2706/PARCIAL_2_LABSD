@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administrador web · Registro de audios</title>
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+  <header class="encabezado">
+    <div class="marca">
+      <span class="logo" aria-hidden="true">◉</span>
+      <h1>Administrador web <small>Registro de audios · Laboratorio de Sistemas Distribuidos</small></h1>
+    </div>
+    <span id="estado-servidor" class="indicador">Consultando servidor…</span>
+  </header>
+
+  <main class="contenedor">
+    <div class="columnas">
+      <section class="panel">
+        <h2>Registrar un nuevo audio</h2>
+        <form id="form-audio" class="formulario" autocomplete="off">
+          <label>Tipo de audio
+            <select id="tipo" required><option value="">Cargando…</option></select>
+          </label>
+          <label>Título del audio
+            <input id="titulo" type="text" maxlength="120" required placeholder="p. ej. Bohemian Rhapsody">
+          </label>
+
+          <fieldset id="campos-metadatos" class="campos-metadatos">
+            <legend>Metadatos propios del tipo</legend>
+            <p class="texto-tenue">Seleccione un tipo de audio.</p>
+          </fieldset>
+
+          <label>Archivo de audio (.mp3)
+            <input id="archivo" type="file" accept=".mp3,audio/mpeg" required>
+            <span id="info-archivo" class="ayuda"></span>
+          </label>
+          <label>Duración
+            <input id="duracion" type="text" placeholder="se calcula al elegir el mp3 (mm:ss)">
+          </label>
+
+          <div id="progreso" class="oculto">
+            <div class="barra-progreso"><div id="barra"></div></div>
+            <span id="texto-progreso" class="ayuda"></span>
+          </div>
+          <button id="btn-registrar" class="boton primario" type="submit">Registrar audio</button>
+        </form>
+        <div id="resultado" class="resultado oculto"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-titulo">
+          <h2>Audios registrados</h2>
+          <select id="filtro-tipo"></select>
+        </div>
+        <div id="lista-audios"><p class="texto-tenue">Cargando…</p></div>
+      </section>
+    </div>
+
+    <section class="panel consola">
+      <div class="panel-titulo">
+        <h2>Ecos del administrador</h2>
+        <button id="btn-limpiar-ecos" class="boton secundario mini" type="button">Limpiar</button>
+      </div>
+      <ol id="ecos" class="ecos"></ol>
+    </section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/funciones.js"></script>
+</body>
+</html>

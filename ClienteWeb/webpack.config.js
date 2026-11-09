@@ -1,13 +1,13 @@
-// webpack.config.js
-const path = require('path');
+// npx webpack  ->  empaqueta src/cliente_receptor_fragmentos.js (y sus imports de grpc-web,
+// google-protobuf y @stomp/stompjs) en dist/main.js, que es el que carga index.html.
+const path = require("path");
 
 module.exports = {
-  // El punto de inicio de tu código
-  entry: './cliente_receptor_fragmentos.js', 
-  mode: 'development',
+  mode: "development",
+  devtool: false,
+  entry: "./src/cliente_receptor_fragmentos.js",
   output: {
-    // El archivo de salida final para el navegador
-    filename: 'bundle.js', 
-    path: path.resolve(__dirname, './'),
+    path: path.resolve(__dirname, "dist"),
+    filename: "main.js",
   },
 };

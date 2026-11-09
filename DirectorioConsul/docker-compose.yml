@@ -1,8 +1,21 @@
+# Infraestructura compartida del proyecto (Docker Desktop en Windows).
+#   docker compose up -d      -> levanta Consul y RabbitMQ
+#   docker compose down       -> los apaga
 services:
   consul:
     image: hashicorp/consul:1.20
     container_name: directorio-consul
     command: agent -dev -client=0.0.0.0 -ui
     ports:
-      - "8500:8500"   # API HTTP + UI web (http://localhost:8500)
+      - "8500:8500"     # API HTTP + interfaz web (http://localhost:8500)
       - "8600:8600/udp" # DNS
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq-sd
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: "1234"
+    ports:
+      - "5672:5672"     # AMQP (streaming -> estadísticas)
+      - "15672:15672"   # consola web (http://localhost:15672, admin / 1234)

@@ -1,160 +1,186 @@
-# Parcial 2 · Laboratorio de Sistemas Distribuidos (Windows)
+# Laboratorio de Sistemas Distribuidos — Requerimiento segundo corte
 
-Implementación de los laboratorios de **reacciones con WebSockets** (GUIA_8) y de
-**planes de suscripción con tokens idempotentes** (GUIA_10), integrados en la
-arquitectura del segundo corte: todo el tráfico del cliente web pasa por el
-**API Gateway**, que resuelve los microservicios en el **directorio Consul**.
+Plataforma de streaming de audios (canciones, podcasts, audiolibros y ruido blanco) con 10 componentes:
 
-```
-Cliente web ──► API Gateway :8000 ──► Consul :8500 (descubrimiento)
-                   │
-                   ├─ /api/suscripciones ──► Servidor de Suscripciones :8084   (REST)
-                   ├─ /api/reacciones    ──► Servidor de Reacciones   :8085   (WebSocket STOMP/SockJS)
-                   └─ /api/streaming     ──► Proxy Envoy :8080 ──► Servidor de Streaming :50051 (gRPC-Web → gRPC)
-```
-
-## Contenido
-
-| Carpeta | Qué es | Tecnología |
-|---|---|---|
-| `ApiGateway/` | Único punto de entrada; resuelve servicios en Consul, agrega `X-Gateway-Token`, maneja CORS, WebSocket y gRPC-Web | Go (solo librería estándar) |
-| `ServidorDeSuscripciones/` | Planes, tokens idempotentes, pagos con simulación de fallos, historial | Go (solo librería estándar) |
-| `ServidorDeReacciones/` | Canales de reacciones por audio, registro/des-registro y reenvío por callback | Spring Boot 3.3 + WebSocket (STOMP) |
-| `ClienteWeb/` | `index.html` + `funciones.js` (reproductor y reacciones) y `planes.html` (suscripciones) | HTML/JS, gRPC-Web, SockJS/STOMP |
-| `ServidorDeStreaming/` | Servidor de streaming entregado por el profesor (sin cambios) | Go + gRPC |
-| `ProxyEnvoy/` | Configuración de Envoy (original y para Docker en Windows) | Envoy 1.36 |
-| `DirectorioConsul/` | `docker-compose.yml` de Consul (GUIA_9) | Consul 1.20 |
-
-Los dos microservicios nuevos usan capas: `capaControladores` → `capaFachada` → `capaAccesoDatos`,
-con `dtos` (JSON) y `modelos`.
-
-## Requisitos en Windows
-
-- **Go 1.24+**: `go version`
-- **JDK 17+** con la variable `JAVA_HOME` configurada: `java -version` (Maven no hace falta: se usa `mvnw.cmd`)
-- **Docker Desktop**: para Consul y Envoy
-- **Node.js**: solo si se modifica `cliente_receptor_fragmentos.js` y hay que regenerar `bundle.js`
-
-> El `envoyServer` que entregó el profesor es un binario de **Linux**. En Windows se usa la imagen
-> oficial `envoyproxy/envoy:v1.36.2` (la misma versión) con `ProxyEnvoy/envoyConfigDocker.yaml`, que
-> apunta a `host.docker.internal:50051`. Alternativa: ejecutar `./envoyServer -c envoyConfig2.yaml --disable-hot-restart` dentro de WSL.
-
-## Ejecución
-
-Opción rápida: doble clic en **`iniciar-todo.bat`** (abre cada servicio en su propia ventana).
-
-Opción manual, en este orden (una consola por servicio):
-
-| # | Componente | Comando |
-|---|---|---|
-| 1 | Consul | `DirectorioConsul\iniciar-consul.bat` → UI en http://localhost:8500 |
-| 2 | Streaming | `cd ServidorDeStreaming` y `go run main/servidor.go` |
-| 3 | Envoy | `ProxyEnvoy\iniciar-envoy.bat` |
-| 4 | Suscripciones | `ServidorDeSuscripciones\iniciar-suscripciones.bat` (o un `scripts\caso-*.bat`) |
-| 5 | Reacciones | `ServidorDeReacciones\iniciar-reacciones.bat` (la primera vez descarga dependencias) |
-| 6 | API Gateway | `ApiGateway\iniciar-gateway.bat` |
-| 7 | Cliente | Abrir `ClienteWeb\index.html` en el navegador |
-
-En http://localhost:8500 deben aparecer `servidor-suscripciones` y `servidor-reacciones` en verde.
-Los servicios se registran solos al iniciar y se des-registran con Ctrl+C.
-
-Si un microservicio se llama directamente (sin pasar por el gateway) responde **403**.
-
-## Cómo demostrar cada requerimiento
-
-### a) Reacciones por WebSocket (`index.html`)
-
-1. Abra `ClienteWeb\index.html` en **dos navegadores** (o una ventana normal y una de incógnito) y
-   escriba un nombre distinto en cada uno.
-2. En ambos, pida `cancion1` (formato mp3). Al sonar (**play**) cada cliente se **registra** en el
-   canal `cancion1`; la bitácora muestra `REGISTRADO en el canal de reacciones "cancion1"`.
-3. Envíe una reacción desde uno: el servidor la reenvía a todos los oyentes del mismo audio.
-4. **Pause** en uno de ellos: se **des-registra** del canal y deja de recibir reacciones.
-   Al cambiar de audio o cuando el audio termina también se des-registra.
-
-Archivos modificados según el enunciado: `ClienteWeb/index.html` y `ClienteWeb/funciones.js`
-(los listeners de `play`/`pause` llaman a `registrarCanal()` y `desregistrarCanal()`).
-
-Ecos del servidor (consola de Spring):
-
-```
-[ECO WS] Cliente CONECTADO por WebSocket (sesión 1a2b...)
-[ECO WS] Invocado: SUBSCRIBE /canalesReacciones/audio/cancion1 (sesión 1a2b...)
-[ECO WS] Val REGISTRADO en el canal "cancion1" (audio: cancion1) · oyentes: 2
-[ECO WS] Invocado: SEND /app/enviarReaccion/cancion1 (sesión 1a2b...)
-[ECO WS] Reacción "heart" de Val en "cancion1" -> reenviando a 2 cliente(s) del canal
-[ECO WS] Invocado: UNSUBSCRIBE sub-1 (sesión 3c4d...)
-[ECO WS] JuanPablo DES-REGISTRADO del canal "cancion1" · oyentes: 1
-```
-
-Contrato STOMP:
-
-| Acción | Destino |
-|---|---|
-| Conexión (SockJS) | `http://localhost:8000/api/reacciones/ws` |
-| Registrarse en un canal (play) | `SUBSCRIBE /canalesReacciones/audio/{canal}` con cabeceras `usuario` y `tituloAudio` |
-| Des-registrarse (pause) | `UNSUBSCRIBE` de esa suscripción |
-| Enviar reacción | `SEND /app/enviarReaccion/{canal}` con `{"usuario","tituloAudio","tipo"}`; `tipo` ∈ like, heart, sad, fun |
-| Consultar canales (REST) | `GET http://localhost:8000/api/reacciones/canales` |
-
-### b) Streaming
-
-Pedir audio en `index.html`. La petición gRPC-Web pasa por el gateway (`/api/streaming`) hacia Envoy.
-Los audios disponibles son los de `ServidorDeStreaming/canciones` (`cancion1`, `cancion2`).
-
-### c) y e) Planes de suscripción con tokens idempotentes (`planes.html`)
-
-1. Elija un plan y pague. El cliente pide primero un **token de idempotencia**
-   (`POST /api/suscripciones/tokens`) y luego paga con él (`POST /api/suscripciones/pagos`).
-2. Si el servidor no responde en 3 s, el cliente **reintenta con el mismo token**, esperando 2, 4, 8 y 16 s
-   (temporizadores en `ClienteWeb/js/config.js`).
-3. **e)** El botón *Simular reutilizar este token* reenvía un token ya usado: el servidor responde
-   `previamente_realizada: true` y **no cobra de nuevo**.
-
-Ecos del cliente (bitácora y consola del navegador): token utilizado, si el pago se realizó y si quedó almacenado.
-Ecos del servidor:
-
-```
-[ECO TOKEN] Token de idempotencia generado: 8671cd3e-... (cédula 1061000000, plan duo, $21900)
-[ECO PAGO] Token utilizado en el pago: 8671cd3e-... (monto $21900)
-[ECO PAGO] Pago realizado exitosamente: transacción 4cdbc56a-..., cédula 1061000000, plan duo, $21900
-[ECO ALMACENAMIENTO] Pago almacenado en datos\transacciones.json
-[ECO PAGO] Token 8671cd3e-... YA UTILIZADO (transacción 4cdbc56a-... por $21900). NO se cobra de nuevo.
-```
-
-Casos de prueba del laboratorio (ejecutar el `.bat` en vez de `iniciar-suscripciones.bat`):
-
-| Script | MODO_FALLO | CANTIDAD_FALLOS | Resultado esperado |
+| Componente | Tecnología | Puerto | Base (ejercicio de clase) |
 |---|---|---|---|
-| `caso-1-primer-intento.bat` | NINGUNO | 0 | Pago al primer intento |
-| `caso-2-tercer-reintento.bat` | PETICION | 3 | Pago en el reintento 3 |
-| `caso-3-perdida-peticiones.bat` | PETICION | 5 | Sin respuesta tras 4 reintentos; no se cobra |
-| `caso-4-perdida-respuestas.bat` | RESPUESTA | 5 | Se cobra 1 vez, el cliente no recibe respuesta |
-| `caso-5-token-reutilizado.bat` | NINGUNO | 0 | Usar *Simular reutilizar este token* |
-| `caso-6-respuesta-perdida-sin-doble-cobro.bat` | RESPUESTA | 2 | Se cobra en el 1.er intento; el reintento 2 confirma sin cobrar otra vez |
+| **ClienteWeb** | HTML + JS, gRPC-Web, STOMP (webpack) | archivo `index.html` | GUIA_10 `cliente-spotify` + GUIA_8 `vista` |
+| **AdministradorWeb** | HTML + JS | archivo `index.html` | PARCIAL_1 `Administrador` (pasado a web) |
+| **APIGateway** | Go + gin | 8000 | GUIA_9 `api-gateway` |
+| **DirectorioCONSUL** | Consul en Docker | 8500 | GUIA_9 `directorio-consul` |
+| **ServidorDeAudioyMetadatos** | Go + gin (REST) | 5001 | PARCIAL_1 `ServidorMetadataDeAudios` + `ServidorDeAudios` |
+| **ServidorDeSuscripciones** | Go + gin (REST) | 5002 | GUIA_10 `servidor-pasarela-pagos` |
+| **ServidorDeEstadisticas** | Go + gin (REST) + RabbitMQ | 5003 | PARCIAL_1 `ServidorDeEstadisticas` |
+| **ServidorDeReacciones** | Java Spring Boot (WebSocket + STOMP) | 5000 | GUIA_8 `servidorchat` |
+| **ProxyEnvoy** | Envoy en Docker (no se desarrolla, solo se configura) | 8080 | — |
+| **ServidorDeStreaming** | Go + gRPC + RabbitMQ | 50051 | PARCIAL_1 `ServidorDeStreaming` |
 
-`scripts\limpiar-datos.bat` borra el historial.
+Además se usa **RabbitMQ** (Docker, puerto 5672) para la comunicación asíncrona streaming → estadísticas.
 
-## Puertos y variables de entorno
+```
+Cliente web ─┐                    ┌─> Directorio CONSUL (resuelve dónde está cada microservicio)
+             ├─> API Gateway :8000┼─> Servidor de suscripciones :5002
+Admin web ───┘                    ├─> Servidor de reacciones :5000 (WebSocket)
+                                  ├─> Servidor de audios y metadatos :5001 ──(guarda el mp3)──┐
+                                  ├─> Servidor de estadísticas :5003                          │
+                                  └─> Proxy Envoy :8080 ─gRPC─> Servidor de streaming :50051 <┘
+                                                                   │
+                                                  RabbitMQ (cola estadisticas_reproducciones)
+                                                                   └─> Servidor de estadísticas
+```
 
-| Servicio | Puerto | Variables |
+Los microservicios se registran solos en Consul al arrancar (latido TTL cada 5 s) y **solo aceptan peticiones que pasen por el API Gateway** (cabecera secreta `X-Gateway-Token`; si llama directo a `localhost:5001/tipos` responde 403).
+
+---
+
+## 1. Requisitos en Windows
+
+| Programa | Para qué | Comprobar |
 |---|---|---|
-| API Gateway | 8000 | `PORT`, `CONSUL_ADDR`, `GATEWAY_SECRET` |
-| Suscripciones | 8084 | `PUERTO`, `CONSUL_ADDR`, `SERVICE_HOST`, `GATEWAY_SECRET`, `MODO_FALLO`, `CANTIDAD_FALLOS`, `RETARDO_FALLO_MS`, `DIRECTORIO_DATOS` |
-| Reacciones | 8085 | `PUERTO`, `CONSUL_ADDR`, `SERVICE_HOST`, `GATEWAY_SECRET`, `EXIGIR_GATEWAY` |
-| Envoy | 8080 | — |
-| Streaming | 50051 | — |
-| Consul | 8500 | — |
+| Go 1.24 o superior | servidores en Go | `go version` |
+| Java JDK 17 o superior (con `JAVA_HOME`) | servidor de reacciones | `java -version` |
+| Node.js 18 o superior | empaquetar el cliente web | `node -v` |
+| Docker Desktop | Consul, RabbitMQ y Envoy | `docker version` |
 
-El secreto por defecto (`secreto-gateway-2026`) es el mismo del laboratorio GUIA_9.
+Maven **no** hace falta instalarlo: el proyecto trae `mvnw.cmd`.
+La primera ejecución necesita internet (Go, Maven, npm y Docker descargan dependencias e imágenes).
 
-## Si modifica el receptor de fragmentos
+---
 
+## 2. Ejecución rápida
+
+Doble clic en **`scripts\iniciar-todo.bat`** (o en PowerShell: `.\scripts\iniciar-todo.ps1`). El script:
+
+1. `1-iniciar-infraestructura.ps1` → Consul + RabbitMQ (`docker compose up -d`) y Envoy en su propia ventana.
+2. `2-iniciar-servidores.ps1` → abre **una ventana por servidor** para ver sus ecos.
+3. `3-iniciar-clientes.ps1` → `npm install` + `npx webpack` (solo la primera vez) y abre el cliente y el administrador.
+
+Si Windows pregunta por el firewall al iniciar los servidores, dé **Permitir**.
+Puede comprobar que todo quedó registrado en **http://localhost:8500** (deben aparecer `servidor-audios`, `servidor-suscripciones`, `servidor-estadisticas` y `servidor-reacciones`).
+
+Para apagar: `Ctrl+C` en cada ventana y `.\scripts\detener-infraestructura.ps1`.
+
+## 3. Ejecución manual (servidor por servidor)
+
+```powershell
+# Infraestructura
+cd DirectorioCONSUL;  docker compose up -d          # Consul + RabbitMQ
+cd ..\ProxyEnvoy;     docker compose up             # Envoy (dejar la ventana abierta)
+
+# Servidores (cada uno en su propia terminal)
+cd ServidorDeStreaming;        go mod tidy; go run ./main
+cd ServidorDeAudioyMetadatos;  go mod tidy; go run .
+cd ServidorDeSuscripciones;    go mod tidy; go run .
+cd ServidorDeEstadisticas;     go mod tidy; go run ./main
+cd ServidorDeReacciones;       .\mvnw.cmd spring-boot:run
+cd APIGateway;                 go mod tidy; go run .
+
+# Clientes
+cd ClienteWeb; npm install; npx webpack   # y abrir ClienteWeb\index.html
+# abrir AdministradorWeb\index.html
 ```
-cd ClienteWeb
-npm install
-npx webpack
+
+> `go mod tidy` se ejecuta siempre antes de `go run` porque el proyecto se entrega sin `go.sum`: así cada equipo descarga y verifica sus propias dependencias.
+
+---
+
+## 4. Qué hace cada opción del requerimiento y dónde está
+
+### a) Reacciones por WebSocket (ServidorDeReacciones)
+* El cliente abre **una sola conexión** WebSocket/STOMP a `ws://localhost:8000/ws-stomp` (pasa por el gateway).
+* Cada audio tiene su **canal**: `/brokerDeReacciones/audio/{idAudio}`.
+* En `ClienteWeb/js/funciones.js` (función `configurarReproductor`) está el *listener* del reproductor:
+  al darle **play** el cliente se **registra** en el canal (SUBSCRIBE) y al **pausar** se **des-registra** (UNSUBSCRIBE). Se muestra el eco "Se ha pausado el audio…".
+* Las reacciones se envían a `/app/enviarReaccion/{idAudio}`; el servidor (`ReaccionesController`) las reenvía como callback, por la conexión ya abierta, **solo** a quienes escuchan ese mismo audio.
+* `GestorCanales` lleva la cuenta de oyentes por canal y avisa cuando alguien entra o sale.
+
+### b) Catálogo y streaming (ServidorDeAudioyMetadatos + Envoy + ServidorDeStreaming)
+Tipos → audios del tipo → detalle con sus metadatos → **Reproducir**. El audio llega en fragmentos de 32 KB por gRPC-Web; el reproductor se vuelve visible con el **primer fragmento** y suena mientras siguen llegando (MediaSource).
+
+### c) Suscripciones con token de idempotencia (ServidorDeSuscripciones)
+1. `POST /api/suscripciones/tokens` → genera el token.
+2. `POST /api/suscripciones/pagos` → paga con ese token. Si no hay respuesta en 3 s, un **temporizador** reintenta a los 2, 4, 8 y 16 s **con el mismo token**.
+3. Ecos en el cliente (panel "Ecos del pago") y en el servidor (`[ECO PAGO]`, `[ECO ALMACENAMIENTO]`): token en uso, si el pago se realizó y si se almacenó en `datos\transacciones.json`.
+
+Para demostrar los reintentos, inicie el servidor con fallos simulados:
+```powershell
+.\ServidorDeSuscripciones\scripts\iniciar-perdida-peticiones.ps1   # el pago NO se procesa en los 2 primeros intentos
+.\ServidorDeSuscripciones\scripts\iniciar-perdida-respuestas.ps1   # el pago SÍ se procesa pero se pierden 2 respuestas
+.\ServidorDeSuscripciones\scripts\limpiar-datos.ps1                # borra tokens y transacciones
 ```
 
-Esto regenera `bundle.js`. La URL de cada servicio está en `ClienteWeb/js/config.js`; para ir directo a
-Envoy sin el gateway, cambie `URL_STREAMING` a `http://localhost:8080`.
+### d) Historial del cliente (ServidorDeEstadisticas)
+Cada vez que empieza un streaming, el servidor de streaming publica en RabbitMQ (asíncrono) quién escuchó qué. Estadísticas consume la cola, guarda en `datos\reproducciones.json` y expone `GET /api/estadisticas/clientes/{usuario}`. Pestaña **Mi historial** del cliente.
+
+### e) Simular un token ya utilizado
+Botón **"Simular token ya utilizado"** (pestaña Suscripciones): busca un token con el que ya se pagó y lo reenvía. El servidor responde `previamente_realizada: true` y **no cobra de nuevo**.
+
+### f) Administrador web (AdministradorWeb)
+Elige el tipo → el formulario pide **los metadatos propios de ese tipo** (Música: artista, álbum, género; Podcasts: nombre, episodio, anfitrión; Audiolibros: título, autor, narrador; Ruido blanco: tipo de sonido, fuente, uso) → título y mp3 (la duración se calcula sola) → `POST /api/audios` (multipart).
+El servidor valida que estén todos los metadatos del tipo y que no vengan metadatos de otro tipo, guarda el mp3 en `ServidorDeStreaming\audios\` y el registro en `ServidorDeAudioyMetadatos\datos\audios.json`.
+
+---
+
+## 5. Cómo se construyeron el Proxy Envoy y el cliente gRPC-Web
+
+No venían los archivos del profesor, así que se crearon así:
+
+### Proxy Envoy (`ProxyEnvoy/`)
+* **`envoyConfig2.yaml`**: un *listener* en `0.0.0.0:8080` con tres filtros HTTP en orden:
+  1. `envoy.filters.http.grpc_web` → convierte gRPC-Web (HTTP/1.1, lo que entiende el navegador) en gRPC.
+  2. `envoy.filters.http.cors` → permite llamadas desde otro origen y expone `grpc-status` / `grpc-message`.
+  3. `envoy.filters.http.router` → envía al *cluster* `servidor_streaming`.
+
+  El *cluster* apunta a `host.docker.internal:50051` (su PC visto desde Docker) con `http2_protocol_options`, porque gRPC exige HTTP/2. `timeout: 0s` evita que Envoy corte streams largos.
+* **`docker-compose.yml`**: ejecuta la imagen oficial `envoyproxy/envoy:v1.31-latest` con ese archivo. Se usa Docker porque Envoy ya no publica binarios oficiales para Windows.
+  El comando es el mismo del PDF: `envoy -c envoyConfig2.yaml --disable-hot-restart`.
+* **`envoyConfig2.local.yaml`**: la misma configuración apuntando a `127.0.0.1:50051`, por si el profesor les da un `envoyServer`/`envoy.exe` nativo: `.\envoyServer -c envoyConfig2.local.yaml --disable-hot-restart`.
+
+En el diagrama el cliente llega al Envoy **a través del API Gateway**: el gateway reenvía todo lo que empieza por `/servicios.AudioService/` a `http://127.0.0.1:8080` sin almacenar en búfer (`FlushInterval: -1`), así cada fragmento llega al navegador apenas sale del servidor. El gateway es el único que pone cabeceras CORS (borra las de Envoy y los microservicios para que no se dupliquen).
+
+### Cliente gRPC-Web (`ClienteWeb/`)
+1. Se copió `audio.proto` del servidor de streaming a `ClienteWeb/proto/`.
+2. Se generaron los *stubs* JavaScript con `protoc` y dos plugins:
+   ```
+   protoc -I=proto audio.proto ^
+     --js_out=import_style=commonjs:src/serviciosAudio ^
+     --grpc-web_out=import_style=commonjs,mode=grpcwebtext:src/serviciosAudio
+   ```
+   Esto produce `audio_pb.js` (mensajes `AudioRequest`/`AudioChunk`) y `audio_grpc_web_pb.js` (`AudioServiceClient`). Se usa `mode=grpcwebtext` porque es el modo de gRPC-Web que soporta *server streaming*. Los archivos generados ya vienen incluidos; `generar-proto.ps1` explica cómo regenerarlos si cambia el `.proto`.
+3. `src/cliente_receptor_fragmentos.js` crea el `AudioServiceClient`, llama `audioStream(...)` y escucha los eventos `data` (cada fragmento), `end` y `error`. Cada fragmento se agrega a un `MediaSource` conectado al `<audio>`, por eso el audio empieza a sonar antes de terminar la descarga.
+4. `npx webpack` empaqueta ese archivo junto con `grpc-web`, `google-protobuf` y `@stomp/stompjs` en `dist/main.js`, que es lo que carga `index.html`. **Si modifica `cliente_receptor_fragmentos.js`, ejecute `npx webpack` otra vez** (igual que dice el PDF). `funciones.js`, `api.js` y `config.js` son scripts normales y no requieren webpack.
+
+---
+
+## 6. Rutas del API Gateway
+
+| Ruta pública (gateway :8000) | Servicio en Consul | Ruta interna |
+|---|---|---|
+| `GET /api/tipos` · `GET /api/tipos/{id}/metadatos` · `GET /api/tipos/{id}/audios` | servidor-audios | `/tipos/...` |
+| `GET /api/audios/{id}` · `POST /api/audios` (multipart) | servidor-audios | `/audios/...` |
+| `GET /api/suscripciones/planes` · `POST .../tokens` · `POST .../pagos` · `GET .../transacciones/{cedula}` · `GET .../estado` | servidor-suscripciones | `/suscripciones/...` |
+| `GET /api/estadisticas/clientes/{usuario}` · `GET /api/estadisticas/resumen` | servidor-estadisticas | `/estadisticas/...` |
+| `ws://.../ws-stomp` (WebSocket nativo) · `/ws` (SockJS) | servidor-reacciones | `/ws-stomp` · `/ws` |
+| `POST /servicios.AudioService/AudioStream` (gRPC-Web) | Proxy Envoy :8080 (fijo) | → streaming :50051 |
+
+## 7. Datos guardados (archivos JSON, igual que la guía 10)
+
+| Archivo | Contenido |
+|---|---|
+| `ServidorDeAudioyMetadatos\datos\audios.json` | audios registrados (se crea con 5 audios de ejemplo la primera vez) |
+| `ServidorDeStreaming\audios\*.mp3` | los mp3 (5 de ejemplo de 30 s, generados, sin derechos de autor) |
+| `ServidorDeSuscripciones\datos\tokens.json`, `transacciones.json` | tokens de idempotencia y pagos |
+| `ServidorDeEstadisticas\datos\reproducciones.json` | historial de reproducciones |
+
+Borre estos `.json` para volver al estado inicial.
+
+## 8. Problemas comunes
+
+| Síntoma | Causa / solución |
+|---|---|
+| `no hay instancias disponibles de "servidor-…"` | Ese servidor no está corriendo o no alcanzó a registrarse en Consul. Revise http://localhost:8500. |
+| El audio no suena y el eco dice `Http response at 400 or 500 level` | Envoy no está arriba o no alcanza el streaming. Revise la ventana de Envoy y que el streaming esté en :50051. |
+| `Reacciones: desconectado` | El servidor de reacciones (Spring) aún está arrancando; el cliente reintenta cada 5 s. |
+| `Falta dist/main.js` | Ejecute `npx webpack` dentro de `ClienteWeb`. |
+| `mvnw.cmd` falla con `JAVA_HOME` | Configure la variable de entorno `JAVA_HOME` con la carpeta del JDK 17+. |
+| Puerto ocupado | Cambie el puerto con la variable `PORT` (Go) o `server.port` (Spring) y actualice `APIGateway`/`config.js` si aplica. |
