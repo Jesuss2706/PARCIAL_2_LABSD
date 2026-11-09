@@ -186,19 +186,59 @@ func (r *AudioRepository) cargarMetadatos() {
 }
 
 // cargarAudiosDeEjemplo se usa solo la primera vez (cuando no existe datos/audios.json).
-// Los mp3 de ejemplo vienen en la carpeta audios del servidor de streaming.
+// NombreArchivo debe coincidir EXACTAMENTE con el mp3 que está en ServidorDeStreaming/audios.
 func (r *AudioRepository) cargarAudiosDeEjemplo() {
 	ahora := time.Now()
+	audio := func(id, tipo int, titulo, archivo, duracion string, valores ...entity.ValorMetadato) entity.Audio {
+		return entity.Audio{Id: id, IdTipoAudio: tipo, Titulo: titulo, NombreArchivo: archivo, Duracion: duracion, FechaRegistro: ahora, Valores: valores}
+	}
+	v := func(idMetadato int, valor string) entity.ValorMetadato {
+		return entity.ValorMetadato{IdMetadato: idMetadato, Valor: valor}
+	}
+
 	r.audios = []entity.Audio{
-		{Id: 1, IdTipoAudio: TipoMusica, Titulo: "Melodía de prueba", NombreArchivo: "ms_melodia_de_prueba.mp3", Duracion: "0:30", FechaRegistro: ahora,
-			Valores: []entity.ValorMetadato{{IdMetadato: metaArtista, Valor: "Laboratorio SD"}, {IdMetadato: metaAlbum, Valor: "Demos"}, {IdMetadato: metaGenero, Valor: "Electrónica"}}},
-		{Id: 2, IdTipoAudio: TipoPodcast, Titulo: "Episodio piloto", NombreArchivo: "pc_episodio_piloto.mp3", Duracion: "0:30", FechaRegistro: ahora,
-			Valores: []entity.ValorMetadato{{IdMetadato: metaPodcast, Valor: "Sistemas Distribuidos al Día"}, {IdMetadato: metaEpisodio, Valor: "Episodio piloto"}, {IdMetadato: metaHost, Valor: "Monitor del laboratorio"}}},
-		{Id: 3, IdTipoAudio: TipoAudiolibro, Titulo: "Capítulo de muestra", NombreArchivo: "al_capitulo_de_muestra.mp3", Duracion: "0:30", FechaRegistro: ahora,
-			Valores: []entity.ValorMetadato{{IdMetadato: metaLibro, Valor: "Relatos de prueba"}, {IdMetadato: metaAutor, Valor: "Autor anónimo"}, {IdMetadato: metaNarrador, Valor: "Voz sintética"}}},
-		{Id: 4, IdTipoAudio: TipoRuidoBlanco, Titulo: "Ruido blanco para concentrarse", NombreArchivo: "rb_ruido_blanco.mp3", Duracion: "0:30", FechaRegistro: ahora,
-			Valores: []entity.ValorMetadato{{IdMetadato: metaSonido, Valor: "Ruido Blanco"}, {IdMetadato: metaFuente, Valor: "Ruido generado"}, {IdMetadato: metaUso, Valor: "Concentración"}}},
-		{Id: 5, IdTipoAudio: TipoRuidoBlanco, Titulo: "Ruido marrón para dormir", NombreArchivo: "rb_ruido_marron.mp3", Duracion: "0:30", FechaRegistro: ahora,
-			Valores: []entity.ValorMetadato{{IdMetadato: metaSonido, Valor: "Ruido Marrón"}, {IdMetadato: metaFuente, Valor: "Ruido generado"}, {IdMetadato: metaUso, Valor: "Dormir"}}},
+		// ----------------------------- Música -----------------------------
+		audio(1, TipoMusica, "Ayer y Hoy - Jean Carlos Centeno", "ms_ayer_y_hoy.mp3", "5:02",
+			v(metaArtista, "Jean Carlos Centeno y La Combinación Vallenata"), v(metaAlbum, "No especificado"), v(metaGenero, "Vallenato")),
+		audio(2, TipoMusica, "Creep - Radiohead", "ms_creep.mp3", "3:56",
+			v(metaArtista, "Radiohead"), v(metaAlbum, "Pablo Honey"), v(metaGenero, "Rock alternativo")),
+		audio(3, TipoMusica, "Las Noches - Junior H", "ms_las_noches.mp3", "3:46",
+			v(metaArtista, "Junior H"), v(metaAlbum, "$ad Boyz 4 Life II"), v(metaGenero, "Regional mexicano")),
+		audio(4, TipoMusica, "Mojabi Ghost - Tainy y Bad Bunny", "ms_mojabi_ghost.mp3", "3:54",
+			v(metaArtista, "Tainy y Bad Bunny"), v(metaAlbum, "Data"), v(metaGenero, "Synth-pop / Electropop")),
+		audio(5, TipoMusica, "Piénsalo - Junior H", "ms_piensalo.mp3", "4:01",
+			v(metaArtista, "Junior H"), v(metaAlbum, "$ad Boyz 4 Life II"), v(metaGenero, "Regional mexicano")),
+		audio(6, TipoMusica, "Se Acabó el Amor - Adolescent's Orquesta", "ms_se_acabo_el_amor.mp3", "4:05",
+			v(metaArtista, "Adolescent's Orquesta"), v(metaAlbum, "No especificado"), v(metaGenero, "Salsa")),
+
+		// ----------------------------- Podcasts -----------------------------
+		audio(7, TipoPodcast, "The Wild Project - ¿Existió realmente Jesús?", "pc_existio_realmente_jesus.mp3", "17:56",
+			v(metaPodcast, "The Wild Project"), v(metaEpisodio, "¿Existió realmente Jesús?"), v(metaHost, "Jordi Wild")),
+		audio(8, TipoPodcast, "The Wild Project - ¿El tiempo existe o es una ilusión humana?", "pc_el_tiempo_existe.mp3", "14:09",
+			v(metaPodcast, "The Wild Project"), v(metaEpisodio, "¿El tiempo existe o es una ilusión humana?"), v(metaHost, "Jordi Wild")),
+		audio(9, TipoPodcast, "The Wild Project - ¿Fue Hitler un loco o no?", "pc_fue_hitler_un_loco.mp3", "6:48",
+			v(metaPodcast, "The Wild Project"), v(metaEpisodio, "¿Fue Hitler un loco o no?"), v(metaHost, "Jordi Wild")),
+		audio(10, TipoPodcast, "Learn English with Podcasts - Tom Holland", "pc_learn_english_tom_holland.mp3", "16:02",
+			v(metaPodcast, "Learn English with Podcasts"), v(metaEpisodio, "Why Tom Holland DELETED His Instagram"), v(metaHost, "Learn English With TV Series")),
+
+		// ----------------------------- Audiolibros -----------------------------
+		audio(11, TipoAudiolibro, "Beatriz (Una palabra enorme)", "al_beatriz_una_palabra_enorme.mp3", "8:59",
+			v(metaLibro, "Beatriz (Una palabra enorme)"), v(metaAutor, "Mario Benedetti"), v(metaNarrador, "No especificado")),
+		audio(12, TipoAudiolibro, "El retrato oval", "al_el_retrato_oval.mp3", "17:09",
+			v(metaLibro, "El retrato oval"), v(metaAutor, "Edgar Allan Poe"), v(metaNarrador, "No especificado")),
+		audio(13, TipoAudiolibro, "El verdadero significado de la vida", "al_el_verdadero_significado_de_la_vida.mp3", "11:57",
+			v(metaLibro, "El verdadero significado de la vida"), v(metaAutor, "León Tolstói"), v(metaNarrador, "No especificado")),
+		audio(14, TipoAudiolibro, "Un día de estos", "al_un_dia_de_estos.mp3", "12:46",
+			v(metaLibro, "Un día de estos"), v(metaAutor, "Gabriel García Márquez"), v(metaNarrador, "No especificado")),
+
+		// ----------------------------- Ruido blanco -----------------------------
+		audio(15, TipoRuidoBlanco, "15 minutos de ruido blanco para relajar", "rb_ruido_blanco_relajar.mp3", "14:58",
+			v(metaSonido, "Ruido Blanco"), v(metaFuente, "Ruido generado"), v(metaUso, "Relajación")),
+		audio(16, TipoRuidoBlanco, "Clair de Lune (slowed)", "rb_clair_de_lune_slowed.mp3", "7:34",
+			v(metaSonido, "Música ambiental"), v(metaFuente, "Piano (Claude Debussy, versión ralentizada)"), v(metaUso, "Concentración")),
+		audio(17, TipoRuidoBlanco, "Dormir rápido en 10 minutos", "rb_dormir_rapido.mp3", "10:00",
+			v(metaSonido, "Sonido relajante"), v(metaFuente, "Ambiente para dormir"), v(metaUso, "Dormir")),
+		audio(18, TipoRuidoBlanco, "Sonido blanco para meditación profunda (432 Hz)", "rb_meditacion_432hz.mp3", "12:30",
+			v(metaSonido, "Ruido Blanco"), v(metaFuente, "Tono de 432 Hz"), v(metaUso, "Meditación")),
 	}
 }

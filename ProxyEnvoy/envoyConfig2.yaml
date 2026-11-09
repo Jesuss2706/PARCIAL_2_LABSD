@@ -60,6 +60,7 @@ static_resources:
   clusters:
     - name: servidor_streaming
       connect_timeout: 1s
+      dns_lookup_family: V4_ONLY
       type: logical_dns
       lb_policy: round_robin
       # El servidor de streaming habla gRPC, es decir, HTTP/2

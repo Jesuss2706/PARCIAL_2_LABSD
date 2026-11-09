@@ -1,0 +1,26 @@
+[
+  {
+    "id": "7582f356-fca0-40f4-826d-d7f23798f0c4",
+    "token": "1c9440a9-8351-4fc4-8474-92c55266f19c",
+    "cedula": "1061000000",
+    "suscripcion_id": "individual",
+    "monto": 16900,
+    "fecha": "2026-11-09T17:51:04.7493423-05:00"
+  },
+  {
+    "id": "4b5a1fc6-57c9-4b8f-b6a9-eca477f7f8d3",
+    "token": "9f65ae31-1c66-49bd-a262-d38b626949a6",
+    "cedula": "1061000000",
+    "suscripcion_id": "duo",
+    "monto": 21900,
+    "fecha": "2026-11-09T18:11:14.9361107-05:00"
+  },
+  {
+    "id": "c43a14bb-c5be-4c5e-a0ca-26e1b339fc74",
+    "token": "2091faca-30bd-462a-b057-c982c1177c13",
+    "cedula": "1061000000",
+    "suscripcion_id": "duo",
+    "monto": 21900,
+    "fecha": "2026-11-09T18:11:18.4633869-05:00"
+  }
+]

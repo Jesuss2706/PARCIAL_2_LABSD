@@ -1,5 +1,3 @@
-# Proxy Envoy en Docker Desktop (Envoy ya no publica binarios oficiales para Windows).
-#   docker compose up        -> ver los ecos del proxy en la consola
 services:
   envoy:
     image: envoyproxy/envoy:v1.31-latest
@@ -8,7 +6,7 @@ services:
     volumes:
       - ./envoyConfig2.yaml:/etc/envoy/envoyConfig2.yaml:ro
     ports:
-      - "8080:8080"   # gRPC-Web (lo usa el API Gateway)
-      - "9901:9901"   # consola de administración de Envoy
+      - "8080:8080"
+      - "9901:9901"
     extra_hosts:
       - "host.docker.internal:host-gateway"

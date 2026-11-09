@@ -1,0 +1,439 @@
+[
+  {
+    "id": 1,
+    "idTipoAudio": 1,
+    "titulo": "Ayer y Hoy - Jean Carlos Centeno",
+    "nombreArchivo": "ms_ayer_y_hoy.mp3",
+    "duracion": "5:02",
+    "tamanoBytes": 0,
+    "fechaRegistro": "2026-11-09T17:31:26.8090335-05:00",
+    "valores": [
+      {
+        "idMetadato": 101,
+        "valor": "Jean Carlos Centeno y La Combinación Vallenata"
+      },
+      {
+        "idMetadato": 102,
+        "valor": "No especificado"
+      },
+      {
+        "idMetadato": 103,
+        "valor": "Vallenato"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "idTipoAudio": 1,
+    "titulo": "Creep - Radiohead",
+    "nombreArchivo": "ms_creep.mp3",
+    "duracion": "3:56",
+    "tamanoBytes": 0,
+    "fechaRegistro": "2026-11-09T17:31:26.8090335-05:00",
+    "valores": [
+      {
+        "idMetadato": 101,
+        "valor": "Radiohead"
+      },
+      {
+        "idMetadato": 102,
+        "valor": "Pablo Honey"
+      },
+      {
+        "idMetadato": 103,
+        "valor": "Rock alternativo"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "idTipoAudio": 1,
+    "titulo": "Las Noches - Junior H",
+    "nombreArchivo": "ms_las_noches.mp3",
+    "duracion": "3:46",
+    "tamanoBytes": 0,
+    "fechaRegistro": "2026-11-09T17:31:26.8090335-05:00",
+    "valores": [
+      {
+        "idMetadato": 101,
+        "valor": "Junior H"
+      },
+      {
+        "idMetadato": 102,
+        "valor": "$ad Boyz 4 Life II"
+      },
+      {
+        "idMetadato": 103,
+        "valor": "Regional mexicano"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "idTipoAudio": 1,
+    "titulo": "Mojabi Ghost - Tainy y Bad Bunny",
+    "nombreArchivo": "ms_mojabi_ghost.mp3",
+    "duracion": "3:54",
+    "tamanoBytes": 0,
+    "fechaRegistro": "2026-11-09T17:31:26.8090335-05:00",
+    "valores": [
+      {
+        "idMetadato": 101,
+        "valor": "Tainy y Bad Bunny"
+      },
+      {
+        "idMetadato": 102,
+        "valor": "Data"
+      },
+      {
+        "idMetadato": 103,
+        "valor": "Synth-pop / Electropop"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "idTipoAudio": 1,
+    "titulo": "Piénsalo - Junior H",
+    "nombreArchivo": "ms_piensalo.mp3",
+    "duracion": "4:01",
+    "tamanoBytes": 0,
+    "fechaRegistro": "2026-11-09T17:31:26.8090335-05:00",
+    "valores": [
+      {
+        "idMetadato": 101,
+        "valor": "Junior H"
+      },
+      {
+        "idMetadato": 102,
+        "valor": "$ad Boyz 4 Life II"
+      },
+      {
+        "idMetadato": 103,
+        "valor": "Regional mexicano"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "idTipoAudio": 1,
+    "titulo": "Se Acabó el Amor - Adolescent's Orquesta",
+    "nombreArchivo": "ms_se_acabo_el_amor.mp3",
+    "duracion": "4:05",
+    "tamanoBytes": 0,
+    "fechaRegistro": "2026-11-09T17:31:26.8090335-05:00",
+    "valores": [
+      {
+        "idMetadato": 101,
+        "valor": "Adolescent's Orquesta"
+      },
+      {
+        "idMetadato": 102,
+        "valor": "No especificado"
+      },
+      {
+        "idMetadato": 103,
+        "valor": "Salsa"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "idTipoAudio": 2,
+    "titulo": "The Wild Project - ¿Existió realmente Jesús?",
+    "nombreArchivo": "pc_existio_realmente_jesus.mp3",
+    "duracion": "17:56",
+    "tamanoBytes": 0,
+    "fechaRegistro": "2026-11-09T17:31:26.8090335-05:00",
+    "valores": [
+      {
+        "idMetadato": 201,
+        "valor": "The Wild Project"
+      },
+      {
+        "idMetadato": 202,
+        "valor": "¿Existió realmente Jesús?"
+      },
+      {
+        "idMetadato": 203,
+        "valor": "Jordi Wild"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "idTipoAudio": 2,
+    "titulo": "The Wild Project - ¿El tiempo existe o es una ilusión humana?",
+    "nombreArchivo": "pc_el_tiempo_existe.mp3",
+    "duracion": "14:09",
+    "tamanoBytes": 0,
+    "fechaRegistro": "2026-11-09T17:31:26.8090335-05:00",
+    "valores": [
+      {
+        "idMetadato": 201,
+        "valor": "The Wild Project"
+      },
+      {
+        "idMetadato": 202,
+        "valor": "¿El tiempo existe o es una ilusión humana?"
+      },
+      {
+        "idMetadato": 203,
+        "valor": "Jordi Wild"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "idTipoAudio": 2,
+    "titulo": "The Wild Project - ¿Fue Hitler un loco o no?",
+    "nombreArchivo": "pc_fue_hitler_un_loco.mp3",
+    "duracion": "6:48",
+    "tamanoBytes": 0,
+    "fechaRegistro": "2026-11-09T17:31:26.8090335-05:00",
+    "valores": [
+      {
+        "idMetadato": 201,
+        "valor": "The Wild Project"
+      },
+      {
+        "idMetadato": 202,
+        "valor": "¿Fue Hitler un loco o no?"
+      },
+      {
+        "idMetadato": 203,
+        "valor": "Jordi Wild"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "idTipoAudio": 2,
+    "titulo": "Learn English with Podcasts - Tom Holland",
+    "nombreArchivo": "pc_learn_english_tom_holland.mp3",
+    "duracion": "16:02",
+    "tamanoBytes": 0,
+    "fechaRegistro": "2026-11-09T17:31:26.8090335-05:00",
+    "valores": [
+      {
+        "idMetadato": 201,
+        "valor": "Learn English with Podcasts"
+      },
+      {
+        "idMetadato": 202,
+        "valor": "Why Tom Holland DELETED His Instagram"
+      },
+      {
+        "idMetadato": 203,
+        "valor": "Learn English With TV Series"
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "idTipoAudio": 3,
+    "titulo": "Beatriz (Una palabra enorme)",
+    "nombreArchivo": "al_beatriz_una_palabra_enorme.mp3",
+    "duracion": "8:59",
+    "tamanoBytes": 0,
+    "fechaRegistro": "2026-11-09T17:31:26.8090335-05:00",
+    "valores": [
+      {
+        "idMetadato": 301,
+        "valor": "Beatriz (Una palabra enorme)"
+      },
+      {
+        "idMetadato": 302,
+        "valor": "Mario Benedetti"
+      },
+      {
+        "idMetadato": 303,
+        "valor": "No especificado"
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "idTipoAudio": 3,
+    "titulo": "El retrato oval",
+    "nombreArchivo": "al_el_retrato_oval.mp3",
+    "duracion": "17:09",
+    "tamanoBytes": 0,
+    "fechaRegistro": "2026-11-09T17:31:26.8090335-05:00",
+    "valores": [
+      {
+        "idMetadato": 301,
+        "valor": "El retrato oval"
+      },
+      {
+        "idMetadato": 302,
+        "valor": "Edgar Allan Poe"
+      },
+      {
+        "idMetadato": 303,
+        "valor": "No especificado"
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "idTipoAudio": 3,
+    "titulo": "El verdadero significado de la vida",
+    "nombreArchivo": "al_el_verdadero_significado_de_la_vida.mp3",
+    "duracion": "11:57",
+    "tamanoBytes": 0,
+    "fechaRegistro": "2026-11-09T17:31:26.8090335-05:00",
+    "valores": [
+      {
+        "idMetadato": 301,
+        "valor": "El verdadero significado de la vida"
+      },
+      {
+        "idMetadato": 302,
+        "valor": "León Tolstói"
+      },
+      {
+        "idMetadato": 303,
+        "valor": "No especificado"
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "idTipoAudio": 3,
+    "titulo": "Un día de estos",
+    "nombreArchivo": "al_un_dia_de_estos.mp3",
+    "duracion": "12:46",
+    "tamanoBytes": 0,
+    "fechaRegistro": "2026-11-09T17:31:26.8090335-05:00",
+    "valores": [
+      {
+        "idMetadato": 301,
+        "valor": "Un día de estos"
+      },
+      {
+        "idMetadato": 302,
+        "valor": "Gabriel García Márquez"
+      },
+      {
+        "idMetadato": 303,
+        "valor": "No especificado"
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "idTipoAudio": 4,
+    "titulo": "15 minutos de ruido blanco para relajar",
+    "nombreArchivo": "rb_ruido_blanco_relajar.mp3",
+    "duracion": "14:58",
+    "tamanoBytes": 0,
+    "fechaRegistro": "2026-11-09T17:31:26.8090335-05:00",
+    "valores": [
+      {
+        "idMetadato": 401,
+        "valor": "Ruido Blanco"
+      },
+      {
+        "idMetadato": 402,
+        "valor": "Ruido generado"
+      },
+      {
+        "idMetadato": 403,
+        "valor": "Relajación"
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "idTipoAudio": 4,
+    "titulo": "Clair de Lune (slowed)",
+    "nombreArchivo": "rb_clair_de_lune_slowed.mp3",
+    "duracion": "7:34",
+    "tamanoBytes": 0,
+    "fechaRegistro": "2026-11-09T17:31:26.8090335-05:00",
+    "valores": [
+      {
+        "idMetadato": 401,
+        "valor": "Música ambiental"
+      },
+      {
+        "idMetadato": 402,
+        "valor": "Piano (Claude Debussy, versión ralentizada)"
+      },
+      {
+        "idMetadato": 403,
+        "valor": "Concentración"
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "idTipoAudio": 4,
+    "titulo": "Dormir rápido en 10 minutos",
+    "nombreArchivo": "rb_dormir_rapido.mp3",
+    "duracion": "10:00",
+    "tamanoBytes": 0,
+    "fechaRegistro": "2026-11-09T17:31:26.8090335-05:00",
+    "valores": [
+      {
+        "idMetadato": 401,
+        "valor": "Sonido relajante"
+      },
+      {
+        "idMetadato": 402,
+        "valor": "Ambiente para dormir"
+      },
+      {
+        "idMetadato": 403,
+        "valor": "Dormir"
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "idTipoAudio": 4,
+    "titulo": "Sonido blanco para meditación profunda (432 Hz)",
+    "nombreArchivo": "rb_meditacion_432hz.mp3",
+    "duracion": "12:30",
+    "tamanoBytes": 0,
+    "fechaRegistro": "2026-11-09T17:31:26.8090335-05:00",
+    "valores": [
+      {
+        "idMetadato": 401,
+        "valor": "Ruido Blanco"
+      },
+      {
+        "idMetadato": 402,
+        "valor": "Tono de 432 Hz"
+      },
+      {
+        "idMetadato": 403,
+        "valor": "Meditación"
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "idTipoAudio": 1,
+    "titulo": "Me sobran las palabras - El binomio de Oro",
+    "nombreArchivo": "ms_me_sobran_las_palabras_el_binomio_de_oro.mp3",
+    "duracion": "4:29",
+    "tamanoBytes": 6453217,
+    "fechaRegistro": "2026-11-09T18:07:42.3379609-05:00",
+    "valores": [
+      {
+        "idMetadato": 101,
+        "valor": "Binomio de Oro"
+      },
+      {
+        "idMetadato": 102,
+        "valor": "Los años de ORO"
+      },
+      {
+        "idMetadato": 103,
+        "valor": "Vallenato"
+      }
+    ]
+  }
+]
